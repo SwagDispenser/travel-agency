@@ -1,0 +1,113 @@
+@app = http://localhost:8080
+@keycloak = http://localhost:8081/realms/travel-agency
+
+### Get ADMIN token for the demo endpoints
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=travel-agency-ui&client_secret=travel-agency-secret&username=admin&password=admin
+
+> {% client.global.set("aop_admin_token", response.body.access_token); %}
+
+### Get USER token for the regular quote endpoint
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=travel-agency-ui&client_secret=travel-agency-secret&username=user&password=user
+
+> {% client.global.set("aop_user_token", response.body.access_token); %}
+
+### NormalizeTourInput: create a dedicated demo tour; returned text has no surrounding spaces
+POST {{app}}/api/tours
+Authorization: Bearer {{aop_admin_token}}
+Content-Type: application/json
+
+{
+  "title": "  AOP Demo Tour  ",
+  "country": "  Italy  ",
+  "city": "  Rome  ",
+  "description": "  Dedicated tour for Lab 4  ",
+  "startDate": "2030-06-01",
+  "endDate": "2030-06-05",
+  "price": 220.00,
+  "availableSeats": 12,
+  "featured": false
+}
+
+> {%
+  client.global.set("aop_tour_id", response.body.id);
+  client.test("Input normalization is visible in the response", function () {
+    client.assert(response.status === 201, "Expected 201");
+    client.assert(response.body.title === "AOP Demo Tour", "Expected stripped title");
+    client.assert(response.body.country === "Italy", "Expected stripped country");
+  });
+%}
+
+### Regular quote: subtotal 440.00 + booking fee 20.00 = total 460.00
+GET {{app}}/api/tours/{{aop_tour_id}}/quote?passengers=2
+Authorization: Bearer {{aop_user_token}}
+
+> {%
+  client.test("BookingFee advice adjusts the quote", function () {
+    client.assert(response.status === 200, "Expected 200");
+    client.assert(response.body.bookingFee === 20, "Expected fee 20");
+    client.assert(response.body.total === 460, "Expected total 460");
+  });
+%}
+
+### Same annotated quote method, external call through the proxy: total 460.00
+GET {{app}}/admin/aop-demo/tours/{{aop_tour_id}}/external?passengers=2
+Authorization: Bearer {{aop_admin_token}}
+
+> {%
+  client.test("External call applies the fee", function () {
+    client.assert(response.status === 200, "Expected 200");
+    client.assert(response.body.total === 460, "Expected total 460");
+  });
+%}
+
+### Same annotated quote method, self-invocation: no error, fee 0.00, total 440.00
+GET {{app}}/admin/aop-demo/tours/{{aop_tour_id}}/self-invocation?passengers=2
+Authorization: Bearer {{aop_admin_token}}
+
+> {%
+  client.test("Self-invocation silently bypasses the fee", function () {
+    client.assert(response.status === 200, "Expected 200 without an AOP error");
+    client.assert(response.body.bookingFee === 0, "Expected no fee");
+    client.assert(response.body.total === 440, "Expected total 440");
+  });
+%}
+
+### PassengerLimit: external call with zero passengers returns 400
+GET {{app}}/api/tours/{{aop_tour_id}}/quote?passengers=0
+Authorization: Bearer {{aop_user_token}}
+
+> {%
+  client.test("Passenger guard blocks zero", function () {
+    client.assert(response.status === 400, "Expected 400");
+    client.assert(response.body.detail === "Passenger count must be between 1 and 10", "Expected clear error");
+  });
+%}
+
+### Intentional lab behavior: self-invocation skips the passenger guard, returns 200 and total 0.00
+GET {{app}}/admin/aop-demo/tours/{{aop_tour_id}}/self-invocation?passengers=0
+Authorization: Bearer {{aop_admin_token}}
+
+> {%
+  client.test("Self-invocation bypasses the passenger guard", function () {
+    client.assert(response.status === 200, "Expected 200");
+    client.assert(response.body.total === 0, "Expected zero total");
+  });
+%}
+
+### PassengerLimit: external call with more than ten passengers returns 400
+GET {{app}}/api/tours/{{aop_tour_id}}/quote?passengers=11
+Authorization: Bearer {{aop_user_token}}
+
+### A regular user cannot enter the administrative self-invocation demo: 403
+GET {{app}}/admin/aop-demo/tours/{{aop_tour_id}}/self-invocation?passengers=2
+Authorization: Bearer {{aop_user_token}}
+
+### Remove only the demo tour created above
+DELETE {{app}}/api/tours/{{aop_tour_id}}
+Authorization: Bearer {{aop_admin_token}}
