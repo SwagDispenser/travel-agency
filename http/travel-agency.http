@@ -1,0 +1,112 @@
+@app = http://localhost:8080
+@keycloak = http://localhost:8081/realms/travel-agency
+@client_id = travel-agency-ui
+@client_secret = travel-agency-secret
+
+### Get ADMIN JWT
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id={{client_id}}&client_secret={{client_secret}}&username=admin&password=admin
+
+> {% client.global.set("admin_token", response.body.access_token); %}
+
+### Get USER JWT
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id={{client_id}}&client_secret={{client_secret}}&username=user&password=user
+
+> {% client.global.set("user_token", response.body.access_token); %}
+
+### Read tours with ADMIN JWT
+GET {{app}}/api/tours
+Authorization: Bearer {{admin_token}}
+
+### Read tours with USER JWT
+GET {{app}}/api/tours
+Authorization: Bearer {{user_token}}
+
+### Create tour with ADMIN JWT
+POST {{app}}/api/tours
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "title": "Prague Express",
+  "country": "Czech Republic",
+  "city": "Prague",
+  "description": "Simple bus tour with two nights in a hotel.",
+  "startDate": "2026-12-05",
+  "endDate": "2026-12-08",
+  "price": 310.00,
+  "availableSeats": 20,
+  "featured": false
+}
+
+### Update tour with ADMIN JWT
+PUT {{app}}/api/tours/1
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "title": "Weekend in Krakow Updated",
+  "country": "Poland",
+  "city": "Krakow",
+  "description": "Updated city tour with hotel and guided walk.",
+  "startDate": "2026-10-10",
+  "endDate": "2026-10-12",
+  "price": 245.00,
+  "availableSeats": 10,
+  "featured": true
+}
+
+### Method security demo: USER cannot create tour, expect 403 from @PreAuthorize
+POST {{app}}/api/tours
+Authorization: Bearer {{user_token}}
+Content-Type: application/json
+
+{
+  "title": "Forbidden Test",
+  "country": "Italy",
+  "city": "Rome",
+  "description": "This request should fail for USER.",
+  "startDate": "2026-12-10",
+  "endDate": "2026-12-14",
+  "price": 500.00,
+  "availableSeats": 5,
+  "featured": false
+}
+
+### SecurityFilterChain demo: USER cannot open admin endpoint, expect 403
+GET {{app}}/admin/status
+Authorization: Bearer {{user_token}}
+
+### SecurityFilterChain demo: ADMIN can open admin endpoint
+GET {{app}}/admin/status
+Authorization: Bearer {{admin_token}}
+
+### Delete tour with ADMIN JWT
+DELETE {{app}}/api/tours/1
+Authorization: Bearer {{admin_token}}
+
+### Custom MVC resolver: current authenticated Keycloak subject, expect 200
+GET {{app}}/api/travelers/me
+Authorization: Bearer {{user_token}}
+
+### Custom date constraint: end before start, expect 400 with endDate message
+POST {{app}}/api/tours
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "title": "Invalid date range",
+  "country": "Italy",
+  "city": "Rome",
+  "description": "Demonstrates the class-level ValidTourDates constraint.",
+  "startDate": "2030-06-05",
+  "endDate": "2030-06-01",
+  "price": 450.00,
+  "availableSeats": 5,
+  "featured": false
+}

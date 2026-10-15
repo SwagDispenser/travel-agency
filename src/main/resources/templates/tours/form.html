@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Tour form</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #1f2937; }
+        form { max-width: 720px; display: grid; gap: 12px; }
+        label { display: grid; gap: 4px; font-weight: 700; }
+        input, textarea { padding: 8px; border: 1px solid #d1d5db; font: inherit; }
+        textarea { min-height: 90px; }
+        .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .error { color: #dc2626; font-size: 14px; }
+        .actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+        .button { border: 1px solid #2563eb; background: #2563eb; color: white; padding: 8px 12px; text-decoration: none; cursor: pointer; }
+        .secondary { border-color: #6b7280; background: #6b7280; }
+    </style>
+</head>
+<body>
+<h1 th:text="${mode == 'create' ? 'Create tour' : 'Edit tour'}">Tour form</h1>
+
+<form th:action="${mode == 'create'} ? @{/tours} : @{/tours/{id}(id=${tourId})}" th:object="${tour}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+    <label>
+        Title
+        <input th:field="*{title}" required maxlength="120">
+        <span class="error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+    </label>
+
+    <div class="row">
+        <label>
+            Country
+            <input th:field="*{country}" required maxlength="80">
+            <span class="error" th:if="${#fields.hasErrors('country')}" th:errors="*{country}"></span>
+        </label>
+        <label>
+            City
+            <input th:field="*{city}" required maxlength="80">
+            <span class="error" th:if="${#fields.hasErrors('city')}" th:errors="*{city}"></span>
+        </label>
+    </div>
+
+    <label>
+        Description
+        <textarea th:field="*{description}" maxlength="500"></textarea>
+        <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+    </label>
+
+    <div class="row">
+        <label>
+            Start date
+            <input th:field="*{startDate}" type="date" required>
+            <span class="error" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></span>
+        </label>
+        <label>
+            End date
+            <input th:field="*{endDate}" type="date" required>
+            <span class="error" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></span>
+        </label>
+    </div>
+
+    <div class="row">
+        <label>
+            Price
+            <input th:field="*{price}" type="number" step="0.01" min="0.01" required>
+            <span class="error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></span>
+        </label>
+        <label>
+            Available seats
+            <input th:field="*{availableSeats}" type="number" min="0" required>
+            <span class="error" th:if="${#fields.hasErrors('availableSeats')}" th:errors="*{availableSeats}"></span>
+        </label>
+    </div>
+
+    <label>
+        <span>
+            <input th:field="*{featured}" type="checkbox">
+            Featured
+        </span>
+    </label>
+
+    <div class="actions">
+        <button class="button" type="submit">Save</button>
+        <a class="button secondary" th:href="@{/tours}">Cancel</a>
+    </div>
+</form>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8">
+    <title>Travel Agency Tours</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #1f2937; }
+        header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+        th { background: #f3f4f6; }
+        form { display: inline; }
+        .actions { display: flex; gap: 8px; align-items: center; }
+        .button { border: 1px solid #2563eb; background: #2563eb; color: white; padding: 7px 10px; text-decoration: none; cursor: pointer; }
+        .secondary { border-color: #6b7280; background: #6b7280; }
+        .danger { border-color: #dc2626; background: #dc2626; }
+        .muted { color: #6b7280; }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h1>Travel Agency Tours</h1>
+        <p class="muted">Signed in as <span sec:authentication="name">guest</span></p>
+    </div>
+    <div class="actions">
+        <a class="button" th:href="@{/tours/new}" sec:authorize="hasRole('ADMIN')">New tour</a>
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button class="button secondary" type="submit">Logout</button>
+        </form>
+    </div>
+</header>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Destination</th>
+        <th>Dates</th>
+        <th>Price</th>
+        <th>Seats</th>
+        <th>Featured</th>
+        <th sec:authorize="hasRole('ADMIN')">Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="tour : ${tours}">
+        <td th:text="${tour.id()}">1</td>
+        <td>
+            <strong th:text="${tour.title()}">Tour title</strong><br>
+            <span class="muted" th:text="${tour.description()}">Description</span>
+        </td>
+        <td th:text="${tour.city() + ', ' + tour.country()}">City, Country</td>
+        <td th:text="${tour.startDate() + ' - ' + tour.endDate()}">Dates</td>
+        <td th:text="${tour.price()}">0.00</td>
+        <td th:text="${tour.availableSeats()}">0</td>
+        <td th:text="${tour.featured() ? 'yes' : 'no'}">no</td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <div class="actions">
+                <a class="button secondary" th:href="@{/tours/{id}/edit(id=${tour.id()})}">Edit</a>
+                <form th:action="@{/tours/{id}/toggle-featured(id=${tour.id()})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button class="button secondary" type="submit">Toggle</button>
+                </form>
+                <form th:action="@{/tours/{id}/delete(id=${tour.id()})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button class="button danger" type="submit">Delete</button>
+                </form>
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
