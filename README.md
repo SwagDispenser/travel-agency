@@ -14,6 +14,10 @@
 і відповідні тести описані в [LAB4_AOP.md](LAB4_AOP.md).
 Демонстраційні запити: [http/lab4-aop.http](http/lab4-aop.http).
 
+Лабораторна робота №5: власний обмежений executor, три асинхронні операції,
+обробка помилок, тайм-аутів і переповнення описані в [LAB5_ASYNC.md](LAB5_ASYNC.md).
+Приклади запитів: [http/lab5-async.http](http/lab5-async.http).
+
 ## Що реалізовано
 
 - REST CRUD API для турів: `GET/POST/PUT/DELETE /api/tours`.

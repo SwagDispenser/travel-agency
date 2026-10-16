@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: travel-agency
+  mvc:
+    async:
+      request-timeout: 5s
   datasource:
     url: jdbc:h2:file:./data/travel-agency;AUTO_SERVER=TRUE;MODE=PostgreSQL
     username: sa
@@ -35,6 +38,14 @@ spring:
         jwt:
           issuer-uri: ${JWT_ISSUER_URI:http://localhost:8081/realms/travel-agency}
           jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8081/realms/travel-agency/protocol/openid-connect/certs}
+
+travel:
+  async:
+    core-pool-size: 2
+    max-pool-size: 2
+    queue-capacity: 2
+    partner-delay-ms: 1000
+    timeout-ms: 2500
 
 logging:
   level:

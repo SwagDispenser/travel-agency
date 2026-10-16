@@ -1,0 +1,98 @@
+@app = http://localhost:8080
+@keycloak = http://localhost:8081/realms/travel-agency
+
+### Get ADMIN token to create a dedicated demo tour
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=travel-agency-ui&client_secret=travel-agency-secret&username=admin&password=admin
+
+> {% client.global.set("async_admin_token", response.body.access_token); %}
+
+### Get USER token for the booking-support endpoints
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=travel-agency-ui&client_secret=travel-agency-secret&username=user&password=user
+
+> {% client.global.set("async_user_token", response.body.access_token); %}
+
+### Create a tour; keep its actual generated ID
+POST {{app}}/api/tours
+Authorization: Bearer {{async_admin_token}}
+Content-Type: application/json
+
+{
+  "title": "Async Rome Demo",
+  "country": "Italy",
+  "city": "Rome",
+  "description": "Dedicated tour for Lab 5.",
+  "startDate": "2030-06-01",
+  "endDate": "2030-06-05",
+  "price": 220.00,
+  "availableSeats": 10,
+  "featured": false
+}
+
+> {%
+  client.test("Demo tour created", function () {
+    client.assert(response.status === 201, "Expected 201");
+  });
+  client.global.set("async_tour_id", response.body.id);
+%}
+
+### Fire-and-forget: 202 before the one-second demo delivery completes
+POST {{app}}/api/tours/{{async_tour_id}}/booking-support/confirmation
+Authorization: Bearer {{async_user_token}}
+Content-Type: application/json
+
+{
+  "email": "traveler@example.com",
+  "simulateFailure": false
+}
+
+### Void failure: still 202; AsyncFailureHandler logs the later provider error
+POST {{app}}/api/tours/{{async_tour_id}}/booking-support/confirmation
+Authorization: Bearer {{async_user_token}}
+Content-Type: application/json
+
+{
+  "email": "traveler@example.com",
+  "simulateFailure": true
+}
+
+### Parallel prices: transfer 50.00 + insurance 30.00 = 80.00 for two passengers
+GET {{app}}/api/tours/{{async_tour_id}}/booking-support/extras?passengers=2
+Authorization: Bearer {{async_user_token}}
+
+> {%
+  client.test("Both prices combined", function () {
+    client.assert(response.status === 200, "Expected 200");
+    client.assert(response.body.available === true, "Prices should be available");
+    client.assert(response.body.total === 80, "Expected 80.00");
+  });
+%}
+
+### Future failure: handled as 200 + available:false, never a misleading zero price
+GET {{app}}/api/tours/{{async_tour_id}}/booking-support/extras?passengers=2&simulateInsuranceFailure=true
+Authorization: Bearer {{async_user_token}}
+
+> {%
+  client.test("Provider failure is handled", function () {
+    client.assert(response.status === 200, "Expected handled response");
+    client.assert(response.body.available === false, "Expected explicit unavailability");
+    client.assert(response.body.total === null, "Unavailable price must not look free");
+  });
+%}
+
+### Invalid passenger count: 400 before any async tasks are submitted
+GET {{app}}/api/tours/{{async_tour_id}}/booking-support/extras?passengers=0
+Authorization: Bearer {{async_user_token}}
+
+### Timeout demo: restart with --travel.async.timeout-ms=200, then run this request
+GET {{app}}/api/tours/{{async_tour_id}}/booking-support/extras?passengers=2
+Authorization: Bearer {{async_user_token}}
+
+### Cleanup after the demonstrations
+DELETE {{app}}/api/tours/{{async_tour_id}}
+Authorization: Bearer {{async_admin_token}}
