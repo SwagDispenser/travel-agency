@@ -62,4 +62,6 @@
             <column name="featured" valueBoolean="false"/>
         </insert>
     </changeSet>
+    <include file="003-quartz.xml" relativeToChangelogFile="true"/>
+    <include file="004-daily-tour-reports.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -18,6 +18,10 @@
 обробка помилок, тайм-аутів і переповнення описані в [LAB5_ASYNC.md](LAB5_ASYNC.md).
 Приклади запитів: [http/lab5-async.http](http/lab5-async.http).
 
+Лабораторна робота №6: Quartz із JDBC Job Store, Liquibase, двома jobs,
+трьома тригерами й тестом перезапуску: [LAB6_QUARTZ.md](LAB6_QUARTZ.md).
+Приклади запитів: [http/lab6-quartz.http](http/lab6-quartz.http).
+
 ## Що реалізовано
 
 - REST CRUD API для турів: `GET/POST/PUT/DELETE /api/tours`.

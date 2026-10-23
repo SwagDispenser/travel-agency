@@ -21,6 +21,15 @@ spring:
     open-in-view: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
+  quartz:
+    job-store-type: jdbc
+    scheduler-name: travelAgencyScheduler
+    overwrite-existing-jobs: false
+    wait-for-jobs-to-complete-on-shutdown: true
+    jdbc:
+      initialize-schema: never
+    properties:
+      org.quartz.threadPool.threadCount: 2
   security:
     oauth2:
       client:
