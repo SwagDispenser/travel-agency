@@ -1,0 +1,61 @@
+@app = http://localhost:8080
+@keycloak = http://localhost:8081/realms/travel-agency
+
+### Get ADMIN token
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=travel-agency-ui&client_secret=travel-agency-secret&username=admin&password=admin
+
+> {% client.global.set("quartz_admin_token", response.body.access_token); %}
+
+### Get USER token for the access-control demonstration
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=travel-agency-ui&client_secret=travel-agency-secret&username=user&password=user
+
+> {% client.global.set("quartz_user_token", response.body.access_token); %}
+
+### Two persistent jobs in the travel-maintenance group
+GET {{app}}/admin/quartz
+Authorization: Bearer {{quartz_admin_token}}
+
+> {%
+  client.test("Both jobs are registered", function () {
+    client.assert(response.status === 200, "Expected 200");
+    client.assert(response.body.length === 2, "Expected two jobs");
+  });
+%}
+
+### Run the report through Quartz, using country=ALL and horizonDays=30 defaults
+POST {{app}}/admin/quartz/run/daily-tour-report
+Authorization: Bearer {{quartz_admin_token}}
+
+### Trigger data overrides country but retains the default horizon
+POST {{app}}/admin/quartz/run/daily-tour-report?country=Poland
+Authorization: Bearer {{quartz_admin_token}}
+
+### Repeat after jobs finish: the same date/country/horizon must not create another snapshot
+POST {{app}}/admin/quartz/run/daily-tour-report?country=Poland
+Authorization: Bearer {{quartz_admin_token}}
+
+### Read the actual database snapshots; repeat GET if a queued job has not completed yet
+GET {{app}}/admin/quartz/reports
+Authorization: Bearer {{quartz_admin_token}}
+
+### Remove featured from expired tours; watch the affected-row count in application logs
+POST {{app}}/admin/quartz/run/expired-featured-cleanup
+Authorization: Bearer {{quartz_admin_token}}
+
+### Run again: zero further changes for unchanged data
+POST {{app}}/admin/quartz/run/expired-featured-cleanup
+Authorization: Bearer {{quartz_admin_token}}
+
+### Unknown job: 404
+POST {{app}}/admin/quartz/run/unknown-job
+Authorization: Bearer {{quartz_admin_token}}
+
+### USER cannot execute maintenance: 403 from the existing SecurityFilterChain
+POST {{app}}/admin/quartz/run/expired-featured-cleanup
+Authorization: Bearer {{quartz_user_token}}

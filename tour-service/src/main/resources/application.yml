@@ -1,0 +1,61 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: tour-service
+  mvc:
+    async:
+      request-timeout: 5s
+  datasource:
+    url: jdbc:h2:file:./data/travel-agency;AUTO_SERVER=TRUE;MODE=PostgreSQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  quartz:
+    job-store-type: jdbc
+    scheduler-name: travelAgencyScheduler
+    overwrite-existing-jobs: false
+    wait-for-jobs-to-complete-on-shutdown: true
+    jdbc:
+      initialize-schema: never
+    properties:
+      org.quartz.threadPool.threadCount: 2
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: ${OIDC_CLIENT_ID:travel-agency-ui}
+            client-secret: ${OIDC_CLIENT_SECRET:travel-agency-secret}
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8081/realms/travel-agency}
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8081/realms/travel-agency}
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8081/realms/travel-agency/protocol/openid-connect/certs}
+
+travel:
+  async:
+    core-pool-size: 2
+    max-pool-size: 2
+    queue-capacity: 2
+    partner-delay-ms: 1000
+    timeout-ms: 2500
+
+logging:
+  level:
+    org.springframework.security: INFO
