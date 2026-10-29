@@ -133,3 +133,21 @@ curl http://localhost:8080/api/tours \
   -H "Authorization: Bearer <access_token>"
 ```
 # travel-agency
+
+
+## Лабораторна: Multi-module Maven
+
+Проєкт збирається з кореня як один Maven reactor із двох незалежних сервісів:
+
+| Модуль | Призначення | Порт |
+| --- | --- | ---: |
+| tour-service | Початковий застосунок Travel Agency з лабораторними 1–6: тури, UI, безпека, AOP, async та Quartz | 8080 |
+| booking-service | Окремий REST-сервіс створення та перегляду бронювань | 8082 |
+
+Кореневий pom.xml має packaging=pom, перелічує модулі та містить спільну тестову залежність. Обидва модулі успадковують його як parent; залежностей між сервісами немає. Кожен модуль має власні application.yml, головний клас, тести й Dockerfile. Spring Boot Maven plugin налаштований у POM кожного сервісу.
+
+З кореня репозиторію виконайте mvn verify. Щоб запустити сервіси, виконайте в окремих терміналах mvn -pl tour-service spring-boot:run та mvn -pl booking-service spring-boot:run.
+
+booking-service надає GET і POST /api/bookings та зберігає записи в пам'яті. docker compose up -d --build запускає Keycloak і booking-service. Кожен модуль має окремий Dockerfile; для запуску tour-service у контейнері треба налаштувати адреси Keycloak, доступні з контейнера, через OIDC_ISSUER_URI, JWT_ISSUER_URI і JWT_JWK_SET_URI.
+
+Де шукати критерії: кореневий pom.xml — агрегатор і спільний тестовий стартер; POM-и модулів — parent, залежності й Spring Boot plugin; application.yml і main-класи — окремі конфігурації сервісів; src/test і Dockerfile в кожному модулі — тести та контейнери.

@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: travel-agency
+    name: tour-service
   mvc:
     async:
       request-timeout: 5s
