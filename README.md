@@ -2,6 +2,8 @@
 
 Простий Spring Boot застосунок для предметної області **Travel Agency**. Основна сутність - `Tour`.
 
+Актуальна лабораторна №8: [LAB8_MESSAGE_BROKERS.md](LAB8_MESSAGE_BROKERS.md).
+
 Лабораторна робота №2 (unit-тести, 85,40% покриття та доказ мутаційної
 перевірки): [LAB2_TESTING.md](LAB2_TESTING.md). Для її запуску потрібна Java 17;
 команди наведені в цьому файлі. Docker і Keycloak для unit-тестів не потрібні.
@@ -56,8 +58,11 @@ Keycloak буде доступний на `http://localhost:8081`.
 
 ### 2. Запустити Spring Boot застосунок
 
+З кореня проєкту:
+
 ```bash
-mvn spring-boot:run
+./scripts/mvn17.sh clean install
+java -jar tour-service/target/tour-service-0.0.1-SNAPSHOT.jar
 ```
 
 Застосунок буде доступний на `http://localhost:8080`.
@@ -146,8 +151,33 @@ curl http://localhost:8080/api/tours \
 
 Кореневий pom.xml має packaging=pom, перелічує модулі та містить спільну тестову залежність. Обидва модулі успадковують його як parent; залежностей між сервісами немає. Кожен модуль має власні application.yml, головний клас, тести й Dockerfile. Spring Boot Maven plugin налаштований у POM кожного сервісу.
 
-З кореня репозиторію виконайте mvn verify. Щоб запустити сервіси, виконайте в окремих терміналах mvn -pl tour-service spring-boot:run та mvn -pl booking-service spring-boot:run.
+З кореня репозиторію виконайте mvn verify під Java 17. Після збірки можна запускати JAR-и модулів окремо; для mvn -pl ... spring-boot:run спочатку потрібен mvn install, оскільки сервіси використовують common DTO.
 
-booking-service надає GET і POST /api/bookings та зберігає записи в пам'яті. docker compose up -d --build запускає Keycloak і booking-service. Кожен модуль має окремий Dockerfile; для запуску tour-service у контейнері треба налаштувати адреси Keycloak, доступні з контейнера, через OIDC_ISSUER_URI, JWT_ISSUER_URI і JWT_JWK_SET_URI.
+У лабораторній №8 booking-service отримав власну файлову H2, outbox та RabbitMQ. Модуль common містить лише спільний DTO. Повний стек запускається через docker compose --profile apps up -d --build; без профілю apps запускаються тільки RabbitMQ і Keycloak. Докладні команди наведені в LAB8_MESSAGE_BROKERS.md.
 
 Де шукати критерії: кореневий pom.xml — агрегатор і спільний тестовий стартер; POM-и модулів — parent, залежності й Spring Boot plugin; application.yml і main-класи — окремі конфігурації сервісів; src/test і Dockerfile в кожному модулі — тести та контейнери.
+
+
+## Лабораторна №8: брокер повідомлень
+
+Три дії бронювання передають події з booking-service у tour-service через RabbitMQ. Додано transactional outbox, захист від повторної доставки, постійні сховища та тести. Інструкція запуску, сценарії захисту та відповідність кожному пункту PDF: [LAB8_MESSAGE_BROKERS.md](LAB8_MESSAGE_BROKERS.md). Приклади запитів: [http/lab8-message-brokers.http](http/lab8-message-brokers.http).
+
+
+## Підготовка до здачі лабораторної №8
+
+Відкривайте в IDE кореневу папку travel-agency з кореневим pom.xml. Maven має
+імпортувати common, tour-service і booking-service. Project SDK та Maven Importer
+мають використовувати Java 17; Maven home повинен вказувати на Maven, а не на JDK.
+Після перемикання гілки натисніть Reload All Maven Projects.
+
+```bash
+git branch --show-current
+./scripts/mvn17.sh clean install
+docker compose --profile apps up -d --build
+python3 scripts/check-lab8.py
+```
+
+Для лабораторної №8 використовуйте гілку lab8. Перед перемиканням гілок перевіряйте
+git status: код нової лабораторної повинен бути закомічений. Інші лабораторні
+мають свої POM та структуру каталогів, тому відкриті вкладки з іншої гілки можуть
+показувати помилки після перемикання.
