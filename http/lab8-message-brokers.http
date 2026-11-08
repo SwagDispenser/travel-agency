@@ -1,0 +1,53 @@
+@booking = http://localhost:8082
+@tour = http://localhost:8080
+@keycloak = http://localhost:8081/realms/travel-agency
+
+### Get JWT for the protected consumer endpoint
+POST {{keycloak}}/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&client_id=travel-agency-ui&client_secret=travel-agency-secret&username=admin&password=admin
+
+> {% client.global.set("lab8_token", response.body.access_token); %}
+
+### Action 1: create -> 201, one CREATED event
+POST {{booking}}/api/bookings
+Content-Type: application/json
+
+{"customerName":"Dmytro","tourId":1,"seats":2}
+
+> {% client.global.set("lab8_booking_id", response.body.id); %}
+
+### Action 2: confirm -> 200, one CONFIRMED event
+POST {{booking}}/api/bookings/{{lab8_booking_id}}/confirm
+
+### Action 3: cancel -> 200, one CANCELLED event
+POST {{booking}}/api/bookings/{{lab8_booking_id}}/cancel
+
+### Wait about one second, then read the consumer result
+GET {{tour}}/api/booking-events
+Authorization: Bearer {{lab8_token}}
+
+### Current producer state, persisted in its own H2
+GET {{booking}}/api/bookings
+
+### Failed action -> 409, no event
+POST {{booking}}/api/bookings/{{lab8_booking_id}}/confirm
+
+### Validation failure -> 400, no booking and no event
+POST {{booking}}/api/bookings
+Content-Type: application/json
+
+{"customerName":"","tourId":0,"seats":0}
+
+### Stop tour-service before these two requests, then start it again and read the journal
+POST {{booking}}/api/bookings
+Content-Type: application/json
+
+{"customerName":"Offline demonstration A","tourId":1,"seats":1}
+
+### Second event while the consumer is stopped
+POST {{booking}}/api/bookings
+Content-Type: application/json
+
+{"customerName":"Offline demonstration B","tourId":1,"seats":1}

@@ -4,11 +4,30 @@ server:
 spring:
   application:
     name: tour-service
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:travel}
+    password: ${RABBITMQ_PASSWORD:travel}
+    connection-timeout: 3s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 1
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
   mvc:
     async:
       request-timeout: 5s
   datasource:
-    url: jdbc:h2:file:./data/travel-agency;AUTO_SERVER=TRUE;MODE=PostgreSQL
+    url: ${DATASOURCE_URL:jdbc:h2:file:./data/travel-agency;AUTO_SERVER=TRUE;MODE=PostgreSQL}
     username: sa
     password:
     driver-class-name: org.h2.Driver

@@ -64,4 +64,5 @@
     </changeSet>
     <include file="003-quartz.xml" relativeToChangelogFile="true"/>
     <include file="004-daily-tour-reports.xml" relativeToChangelogFile="true"/>
+    <include file="005-booking-events.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

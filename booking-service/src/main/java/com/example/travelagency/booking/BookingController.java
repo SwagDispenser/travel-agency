@@ -19,6 +19,16 @@ public class BookingController {
         return bookingService.findAll();
     }
 
+    @PostMapping("/{id}/confirm")
+    public BookingResponse confirm(@PathVariable long id) {
+        return bookingService.confirm(id);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public BookingResponse cancel(@PathVariable long id) {
+        return bookingService.cancel(id);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BookingResponse create(@Valid @RequestBody BookingRequest request) {
