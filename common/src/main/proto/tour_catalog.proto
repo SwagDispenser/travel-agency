@@ -1,0 +1,21 @@
+syntax = "proto3";
+package travel.catalog.v1;
+option java_package = "com.example.travelagency.contract.grpc";
+option java_multiple_files = true;
+
+service TourCatalog {
+  rpc GetPrice (TourRequest) returns (PriceReply);
+  rpc GetAvailability (TourRequest) returns (AvailabilityReply);
+  rpc GetItinerary (TourRequest) returns (ItineraryReply);
+}
+message TourRequest { int64 tour_id = 1; }
+message PriceReply { int64 tour_id = 1; string price = 2; }
+message AvailabilityReply { int64 tour_id = 1; int32 available_seats = 2; }
+message ItineraryReply {
+  int64 tour_id = 1;
+  string title = 2;
+  string country = 3;
+  string city = 4;
+  string start_date = 5;
+  string end_date = 6;
+}

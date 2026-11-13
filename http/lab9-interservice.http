@@ -1,0 +1,31 @@
+@booking = http://localhost:8082
+@tour = http://localhost:8080
+@tourId = 1
+
+### Бізнес-дія 1: оцінка вартості групової поїздки
+GET {{booking}}/api/bookings/planning/{{tourId}}/estimate?passengers=2
+Accept: application/json
+
+### Бізнес-дія 2: перевірка вільних місць (без резервування)
+GET {{booking}}/api/bookings/planning/{{tourId}}/availability?passengers=2
+
+### Бізнес-дія 3: маршрут і дати
+GET {{booking}}/api/bookings/planning/{{tourId}}/itinerary
+
+### Відсутній тур -> 404 (обидва адаптери)
+GET {{booking}}/api/bookings/planning/999999999/estimate?passengers=2
+
+### Неправильна кількість пасажирів -> 400
+GET {{booking}}/api/bookings/planning/{{tourId}}/availability?passengers=0
+
+### Зупинити tour-service та повторити цей запит -> 503
+GET {{booking}}/api/bookings/planning/{{tourId}}/itinerary
+
+### Прямі REST ендпоінти B
+GET {{tour}}/api/catalog/tours/{{tourId}}/price
+
+###
+GET {{tour}}/api/catalog/tours/{{tourId}}/availability
+
+###
+GET {{tour}}/api/catalog/tours/{{tourId}}/itinerary
