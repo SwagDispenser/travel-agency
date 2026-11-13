@@ -20,7 +20,6 @@ public class OutboxPublisher {
 
     @Scheduled(fixedDelayString = "${travel.messaging.publish-delay-ms:1000}")
     public void publishPending() {
-        // This thread sees only committed outbox rows (the database uses READ_COMMITTED).
         for (var event : outbox.pending()) {
             try {
                 sender.publish(event);

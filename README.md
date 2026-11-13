@@ -2,7 +2,10 @@
 
 Простий Spring Boot застосунок для предметної області **Travel Agency**. Основна сутність - `Tour`.
 
-Актуальна лабораторна №8: [LAB8_MESSAGE_BROKERS.md](LAB8_MESSAGE_BROKERS.md).
+Актуальна лабораторна №9: [LAB9_INTERSERVICE_COMMUNICATION.md](LAB9_INTERSERVICE_COMMUNICATION.md).
+HTTP/gRPC взаємодія booking-service → tour-service, три порти, тайм-аути та спільна обробка помилок.
+
+Лабораторна №8: [LAB8_MESSAGE_BROKERS.md](LAB8_MESSAGE_BROKERS.md).
 
 Лабораторна робота №2 (unit-тести, 85,40% покриття та доказ мутаційної
 перевірки): [LAB2_TESTING.md](LAB2_TESTING.md). Для її запуску потрібна Java 17;

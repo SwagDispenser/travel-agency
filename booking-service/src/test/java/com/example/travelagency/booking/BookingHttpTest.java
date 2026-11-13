@@ -15,6 +15,18 @@ class BookingHttpTest {
     @Autowired JdbcTemplate jdbc;
 
     @Test
+    void invalidPlanningParametersReturn400BeforeCallingTourService() {
+        for (String path : new String[]{
+                "/api/bookings/planning/0/estimate",
+                "/api/bookings/planning/1/estimate?passengers=0",
+                "/api/bookings/planning/1/availability?passengers=-1",
+                "/api/bookings/planning/0/itinerary"}) {
+            var response = http.getForEntity(path, String.class);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Test
     void invalidRequestReturns400AndCreatesNeitherBookingNorEvent() {
         var response = http.postForEntity("/api/bookings", new BookingRequest("", 0, 0), String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);

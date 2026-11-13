@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/error", "/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/catalog/tours/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/tours/**").authenticated()
                         .requestMatchers("/api/**").authenticated()

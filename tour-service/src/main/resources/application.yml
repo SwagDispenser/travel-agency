@@ -68,6 +68,10 @@ spring:
           jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8081/realms/travel-agency/protocol/openid-connect/certs}
 
 travel:
+  catalog:
+    grpc:
+      enabled: ${TOUR_GRPC_ENABLED:false}
+      port: ${TOUR_GRPC_PORT:9090}
   async:
     core-pool-size: 2
     max-pool-size: 2
